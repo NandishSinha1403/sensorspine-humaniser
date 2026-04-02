@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Humaniser Trainer</title>
+    <style>
+        :root {
+            --sidebar-bg: #1e1e2d;
+            --sidebar-color: #a2a3b7;
+            --accent: #7239ea;
+            --bg: #f5f8fa;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            background: var(--bg);
+            height: 100vh;
+        }
+        aside {
+            width: 280px;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-color);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        h1 { color: white; margin: 0; font-size: 1.5rem; }
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+        }
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: #f8f5ff;
+        }
+        select, button {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+        }
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover { opacity: 0.9; }
+        .log {
+            background: #1e1e2d;
+            color: #50fa7b;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+        }
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card h3 { margin-top: 0; text-transform: capitalize; }
+        .stat { display: flex; justify-content: space-between; margin: 0.5rem 0; color: #64748b; }
+        .stat span:last-child { font-weight: bold; color: #1e293b; }
+        .delete-btn {
+            background: #ffecf0;
+            color: #f1416c;
+            padding: 0.5rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <aside>
+        <h1>Humaniser Trainer</h1>
+        <div>
+            <label style="display:block; margin-bottom:0.5rem">Select Field</label>
+            <select id="field-select" style="width:100%">
+                <option value="general">General</option>
+                <option value="computer_science">Computer Science</option>
+                <option value="social_sciences">Social Sciences</option>
+                <option value="life_sciences">Life Sciences</option>
+                <option value="engineering">Engineering</option>
+                <option value="medicine">Medicine</option>
+                <option value="law">Law</option>
+                <option value="economics">Economics</option>
+                <option value="business">Business</option>
+                <option value="humanities">Humanities</option>
+            </select>
+        </div>
+        <p style="font-size: 0.8rem; opacity: 0.7;">
+            Upload PDF corpus to train field-specific style profiles.
+        </p>
+    </aside>
+
+    <main>
+        <div id="drop-zone" class="upload-zone">
+            <p>Drag & Drop PDFs here or click to browse</p>
+            <input type="file" id="file-input" multiple accept=".pdf" style="display:none">
+        </div>
+
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <button id="upload-btn">Upload and Process</button>
+            <span id="status-text" style="font-size: 0.9rem; color: #64748b;"></span>
+        </div>
+
+        <div id="log" class="log">Waiting for files...</div>
+
+        <h2>Trained Profiles</h2>
+        <div id="profiles-grid" class="profiles-grid"></div>
+    </main>
+
+    <script>
+        const API_BASE = "http://localhost:8001";
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const logEl = document.getElementById('log');
+        const fieldSelect = document.getElementById('field-select');
+        const profilesGrid = document.getElementById('profiles-grid');
+        
+        let selectedFiles = [];
+
+        dropZone.onclick = () => fileInput.click();
+        
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        };
+        
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            selectedFiles = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
+            updateLog(`Selected ${selectedFiles.length} PDF files.`);
+        };
+
+        fileInput.onchange = (e) => {
+            selectedFiles = [...e.target.files];
+            updateLog(`Selected ${selectedFiles.length} files.`);
+        };
+
+        function updateLog(msg, append = true) {
+            if (!append) logEl.innerHTML = "";
+            const line = document.createElement('div');
+            line.textContent = `> ${msg}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        uploadBtn.onclick = async () => {
+            if (selectedFiles.length === 0) {
+                alert("Please select files first");
+                return;
+            }
+
+            const field = fieldSelect.value;
+            const formData = new FormData();
+            formData.append('field', field);
+            selectedFiles.forEach(f => formData.append('files', f));
+
+            updateLog(`Starting batch upload for ${field}...`);
+            uploadBtn.disabled = true;
+
+            try {
+                const resp = await fetch(`${API_BASE}/train/upload-batch`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const results = await resp.json();
+                
+                results.forEach(res => {
+                    updateLog(`Processed: ${res.filename} | Sentences: ${res.sentences} | Vocab: ${res.vocab_size} | Phrases: ${res.phrases}`);
+                });
+                
+                loadProfiles();
+                selectedFiles = [];
+            } catch (err) {
+                updateLog(`Error: ${err.message}`);
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        };
+
+        async function loadProfiles() {
+            try {
+                const resp = await fetch(`${API_BASE}/train/profiles`);
+                const profiles = await resp.json();
+                
+                profilesGrid.innerHTML = "";
+                profiles.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${p.field.replace('_', ' ')}</h3>
+                        <div class="stat"><span>Sentences</span> <span>${p.sentence_count}</span></div>
+                        <div class="stat"><span>Vocab Size</span> <span>${p.vocab_size}</span></div>
+                        <div class="stat"><span>Phrases</span> <span>${p.phrase_count}</span></div>
+                        <button class="delete-btn" onclick="deleteProfile('${p.field}')">Delete</button>
+                    `;
+                    profilesGrid.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deleteProfile(field) {
+            if (!confirm(`Delete ${field} profile?`)) return;
+            await fetch(`${API_BASE}/train/profile/${field}`, { method: 'DELETE' });
+            loadProfiles();
+        }
+
+        loadProfiles();
+        setInterval(loadProfiles, 30000);
+    </script>
+</body>
+</html>

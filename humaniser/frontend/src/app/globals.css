@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F8FAFC] text-slate-900 antialiased;
+  }
+}
+
+/* Custom scrollbar for academic look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+.serif-text {
+  font-family: 'Charter', 'Bitstream Charter', 'Sitka Text', 'Cambria', serif;
+}
+
+.glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white shadow-xl shadow-slate-200/50;
+}

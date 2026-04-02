@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+nltk
+spacy
+pymupdf
+numpy
+scipy
+python-multipart
+python-dotenv
+lemminflect
