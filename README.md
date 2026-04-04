@@ -1,39 +1,37 @@
-# Humaniser: Professional AI Text Naturalizer
+# Humaniser: Professional AI Text Naturalizer (v2.1)
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 
-**Humaniser** is an advanced linguistic suite designed to transform AI-generated text into high-quality, human-like prose that consistently bypasses enterprise-grade AI detectors (Turnitin, GPTZero, etc.).
+**Humaniser** is an elite linguistic suite designed to transform AI-generated text into high-quality, human-like prose. Version 2.1 introduces the **10x Bypass Architecture**, specifically engineered to defeat high-end enterprise detectors like Turnitin and GPTZero.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features: The 10x Bypass Tier
 
-*   **16+ specialized NLP Passes**: Targeting everything from lexical probability to dependency tree depth.
-*   **Hard-Enforced Burstiness**: Guarantees human-like sentence length variation in every paragraph.
-*   **Adversarial Bypass Layer**: Includes Unicode whitespace jitter and structural chaos for high-end detector evasion.
-*   **Self-Audit System**: Recursive humanization loop that stops only when the AI score is below target.
-*   **Modern Jargon Injection**: Disrupts predictability by using sophisticated, context-aware terminology.
-*   **Professional UI**: Real-time metrics dashboard built with Next.js and Tailwind CSS.
+*   **Multi-Hop Back-Translation**: "Washes" AI DNA by routing text through diverse language families (Japanese, Arabic, German).
+*   **Adversarial Tokenization**: Uses Zero-Width characters and Hair Spaces to collapse detector probability math while remaining 100% invisible to humans.
+*   **Every-Line Modification**: Mandatory morphological and syntactic shifts ensure **no single line** is left with an AI signature.
+*   **Dependency Tree Manipulation**: Inverts sentence structures and injects appositives to create human-like "lopsided" syntactic trees.
+*   **Self-Audit Recursive Loop**: Built-in detector ensures output stays below 15% AI confidence before finalization.
 
-## 📊 Benchmarks (v2.0)
+## 📊 Final Benchmarks (v2.1)
 
-| Metric | AI Original | Humaniser (Ultra) |
+| Metric | AI Original | Humaniser (10x Bypass) |
 | :--- | :--- | :--- |
-| **Average AI Score** | 98.4% | **0.75%** |
-| **Bypass Rate (<20%)** | 0% | **94% - 100%** |
-| **Perplexity (Proxy)** | Low (Predictable) | **High (Human-like)** |
-| **Burstiness (Std Dev)** | 2.1 | **14.8+** |
+| **Average AI Score** | 98.4% | **2.58%** |
+| **Bypass Rate (<20%)** | 0% | **96.0%** |
+| **Linguistic DNA** | AI Signature | **Fully Naturalized** |
+| **Detection Method** | Trivial | **Virtually Impossible** |
 
 ---
 
-## 🛠️ Getting Started
+## 🛠️ Installation
 
 ### Prerequisites
 *   Python 3.10+
 *   Node.js 18+
-*   pip & npm
 
 ### One-Click Setup
 ```bash
@@ -45,9 +43,8 @@ chmod +x bootstrap.sh start.sh stop.sh
 ```bash
 ./start.sh
 ```
-The application will be available at:
 *   **Frontend**: `http://localhost:3000`
-*   **Backend API**: `http://localhost:8000`
+*   **Backend**: `http://localhost:8000`
 
 ---
 
@@ -55,20 +52,20 @@ The application will be available at:
 
 ```
 humaniser/
-├── backend/            # FastAPI, spaCy, NLTK, Linguistic Passes
-│   └── app/core/       # The "Brain": humanizer.py & detector.py
-└── frontend/           # Next.js, Tailwind, Metrics Dashboard
+├── backend/            # Python FastAPI, spaCy, NLTK, deep-translator
+│   └── app/core/       # The "Brain": Back-translation & 16+ NLP Passes
+└── frontend/           # Next.js, Tailwind CSS, Comparative Metrics Dashboard
 ```
 
-## 📜 Documentation
+## 📜 Full Documentation
 
-For a deep dive into the architecture and linguistic passes, see [DOCUMENTATION.md](./DOCUMENTATION.md).
+For a deep dive into the Adversarial Linguistic Engineering passes, see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ---
 
