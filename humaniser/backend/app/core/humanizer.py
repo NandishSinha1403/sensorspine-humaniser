@@ -8,6 +8,7 @@ import logging
 import contextvars
 import json
 import spacy
+from deep_translator import GoogleTranslator
 from typing import List, Dict, Any, Optional, Tuple
 from nltk.corpus import wordnet
 from nltk.tokenize import sent_tokenize, word_tokenize
@@ -392,6 +393,204 @@ def restore_citations(text: str, citations: Dict[str, str]) -> str:
 # ===========================================================================
 # Pass functions
 # ===========================================================================
+
+def pass_back_translation(text: str) -> Tuple[str, int]:
+    """Back-translation pre-processor: EN -> JA -> AR -> EN with jargon protection."""
+    jargon_pattern = re.compile(r'\b[A-Z0-9\-]{3,}\b|\b[a-z]{15,}\b')
+    placeholders = {}
+    
+    def replace_jargon(match):
+        token = f"XJARGON{len(placeholders)}X"
+        placeholders[token] = match.group(0)
+        return token
+    
+    text_with_placeholders = jargon_pattern.sub(replace_jargon, text)
+    
+    try:
+        # EN -> JA
+        ja_text = GoogleTranslator(source='en', target='ja').translate(text_with_placeholders)
+        # JA -> AR
+        ar_text = GoogleTranslator(source='ja', target='ar').translate(ja_text)
+        # AR -> EN
+        en_text = GoogleTranslator(source='ar', target='en').translate(ar_text)
+        
+        # Restore placeholders
+        for token, original in placeholders.items():
+            en_text = en_text.replace(token, original)
+        return en_text, 1
+    except Exception as e:
+        logger.error(f"Back-translation failed: {e}")
+        return text, 0
+
+def pass_morphological_shifting(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Identify high-frequency verbs and convert them to noun phrases."""
+    sp = load_spacy()
+    if not sp: return text, 0
+    doc = sp(text)
+    new_sentences, changes = [], 0
+    
+    verb_to_noun = {
+        "analyzed": "conducted an analysis of", "analyze": "perform an analysis of",
+        "examined": "carried out an examination of", "examine": "conduct an examination of",
+        "investigated": "undertook an investigation of", "investigate": "carry out an investigation of",
+        "reviewed": "performed a review of", "review": "conduct a review of",
+        "discussed": "provided a discussion of", "discuss": "offer a discussion of",
+        "concluded": "reached a conclusion regarding", "conclude": "formulate a conclusion about",
+        "evaluated": "made an evaluation of", "evaluate": "perform an evaluation of",
+        "identified": "achieved the identification of", "identify": "complete the identification of",
+    }
+    
+    for sent in doc.sents:
+        sent_text = sent.text.strip()
+        if get_rng().random() < intensity:
+            for v_past, n_phrase in verb_to_noun.items():
+                pattern = re.compile(rf"\b{v_past}\b", re.IGNORECASE)
+                if pattern.search(sent_text):
+                    sent_text = pattern.sub(n_phrase, sent_text)
+                    changes += 1
+        new_sentences.append(sent_text)
+    return " ".join(new_sentences), changes
+
+def pass_human_wordiness(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Inject 'padding' qualifiers into concise sentences."""
+    sentences = sent_tokenize(text)
+    new_sentences, changes = [], 0
+    padding = [
+        "as it happens,", "for all intents and purposes,", "in a very real sense,",
+        "to be perfectly honest,", "as far as the data suggests,", "essentially,",
+        "by and large,", "more or less,", "in some ways,"
+    ]
+    
+    for sent in sentences:
+        chance = 1.0 if intensity >= 1.0 else (0.5 * intensity)
+        if len(sent.split()) < 12 and get_rng().random() < chance:
+            pad = get_rng().choice(padding)
+            sent = pad.capitalize() + " " + sent[0].lower() + sent[1:]
+            changes += 1
+        new_sentences.append(sent)
+    return " ".join(new_sentences), changes
+
+def pass_yoda_inversion(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Move prepositional phrases or objects to the front."""
+    sp = load_spacy()
+    if not sp: return text, 0
+    doc = sp(text)
+    new_sentences, changes = [], 0
+    
+    for sent in doc.sents:
+        sent_text = sent.text.strip()
+        chance = 1.0 if intensity >= 1.0 else (0.2 * intensity)
+        if len(sent) > 8 and get_rng().random() < chance:
+            # Look for prepositional phrases at the end
+            pp = None
+            for token in reversed(sent):
+                if token.dep_ == "prep" and token.head.dep_ == "ROOT":
+                    pp = token
+                    break
+            if pp and pp.i > len(sent) // 2:
+                pp_text = "".join([t.text_with_ws for t in pp.subtree]).strip().rstrip(".,")
+                main_part = "".join([t.text_with_ws for t in sent if t.i < pp.i]).strip().rstrip(",")
+                if main_part:
+                    sent_text = f"{pp_text.capitalize()}, {main_part[0].lower() + main_part[1:]}."
+                    changes += 1
+        new_sentences.append(sent_text)
+    return " ".join(new_sentences), changes
+
+def pass_appositive_injection(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Insert descriptive comma-clauses into the middle of sentences."""
+    sp = load_spacy()
+    if not sp: return text, 0
+    doc = sp(text)
+    new_sentences, changes = [], 0
+    appositives = [
+        ", a point that bears repeating,", ", which is often overlooked,",
+        ", as many scholars have noted,", ", a detail of significant importance,",
+        ", which complicates matters slightly,", ", in a manner of speaking,"
+    ]
+    
+    for sent in doc.sents:
+        sent_text = sent.text.strip()
+        chance = 1.0 if intensity >= 1.0 else (0.25 * intensity)
+        if len(sent) > 10 and get_rng().random() < chance:
+            root = next((t for t in sent if t.dep_ == "ROOT"), None)
+            if root:
+                subj = next((t for t in root.children if "subj" in t.dep_), None)
+                if subj:
+                    idx = subj.i - sent[0].i + 1
+                    if idx < len(sent) - 2:
+                        part1 = "".join([t.text_with_ws for t in sent[:idx]]).strip()
+                        part2 = "".join([t.text_with_ws for t in sent[idx:]]).strip()
+                        sent_text = f"{part1}{get_rng().choice(appositives)} {part2}"
+                        changes += 1
+        new_sentences.append(sent_text)
+    return " ".join(new_sentences), changes
+
+def pass_zwj_jitter(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Inject \u200C (ZWNJ) inside words that are AI triggers."""
+    triggers = ["furthermore", "moreover", "additionally", "consequently", "therefore", "essential", "crucial"]
+    new_text, changes = text, 0
+    for t in triggers:
+        if t in new_text.lower() and get_rng().random() < intensity:
+            # Inject ZWNJ in the middle
+            mid = len(t) // 2
+            jittered = t[:mid] + "\u200C" + t[mid:]
+            new_text = re.sub(rf"\b{t}\b", jittered, new_text, flags=re.IGNORECASE)
+            changes += 1
+    return new_text, changes
+
+def pass_invisible_padding(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Use Hair Spaces (U+200A) between words in common bigrams."""
+    common_bigrams = [("of", "the"), ("in", "the"), ("to", "the"), ("on", "the"), ("and", "the")]
+    new_text, changes = text, 0
+    for b1, b2 in common_bigrams:
+        pattern = re.compile(rf"\b{b1}\s+{b2}\b", re.IGNORECASE)
+        if get_rng().random() < intensity:
+            new_text = pattern.sub(f"{b1}\u200A{b2}", new_text)
+            changes += 1
+    return new_text, changes
+
+def pass_punctuation_personality(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Replace some commas with em-dashes or semicolons."""
+    new_sentences, changes = [], 0
+    for sent in sent_tokenize(text):
+        chance = 1.0 if intensity >= 1.0 else (0.3 * intensity)
+        if "," in sent and get_rng().random() < chance:
+            choices = [" — ", "; "]
+            sent = sent.replace(",", get_rng().choice(choices), 1)
+            changes += 1
+        new_sentences.append(sent)
+    return " ".join(new_sentences), changes
+
+def pass_cross_referencing(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Inject phrases like 'consistent with the earlier points...'."""
+    paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+    new_paragraphs, changes = [], 0
+    markers = ["as previously noted,", "consistent with earlier points,", "as we saw before,", "bearing in mind the previous discussion,"]
+    
+    for i, p in enumerate(paragraphs):
+        sentences = sent_tokenize(p)
+        chance = 1.0 if intensity >= 1.0 else (0.4 * intensity)
+        if i > 0 and sentences and get_rng().random() < chance:
+            m = get_rng().choice(markers)
+            sentences[0] = m.capitalize() + " " + sentences[0][0].lower() + sentences[0][1:]
+            changes += 1
+        new_paragraphs.append(" ".join(sentences))
+    return "\n\n".join(new_paragraphs), changes
+
+def pass_hedging_uncertainty(text: str, intensity: float = 1.0) -> Tuple[str, int]:
+    """Add uncertainty markers to sentences."""
+    sentences = sent_tokenize(text)
+    new_sentences, changes = [], 0
+    hedges = ["it seems that", "perhaps", "potentially,", "arguably,", "one might suggest that"]
+    
+    for sent in sentences:
+        chance = 1.0 if intensity >= 1.0 else (0.5 * intensity)
+        if get_rng().random() < chance:
+            h = get_rng().choice(hedges)
+            sent = h.capitalize() + " " + sent[0].lower() + sent[1:]
+            changes += 1
+        new_sentences.append(sent)
+    return " ".join(new_sentences), changes
 
 def pass_signature_phrase_breaker(text: str) -> Tuple[str, int]:
     """
@@ -1293,6 +1492,8 @@ def apply_light_passes(txt: str, intensity: float, changes: Dict[str, Any], prof
 def apply_full_passes(txt: str, intensity: float, changes: Dict[str, Any], profile: Optional[Dict[str, Any]] = None) -> str:
     c_txt, c0 = pass_signature_phrase_breaker(txt); changes["signature_phrase_breaks"] += c0
     c_txt, c1 = pass_phrase_replacement(c_txt, intensity); changes["phrases_replaced"] += c1
+    c_txt, c_ms = pass_morphological_shifting(c_txt, intensity); changes["morphological_shifting"] += c_ms
+    c_txt, c_hw = pass_human_wordiness(c_txt, intensity); changes["human_wordiness"] += c_hw
     c_txt, c2 = pass_restructuring(c_txt, intensity); changes["sentences_restructured"] += c2
     c_txt, c3 = pass_burstiness(c_txt, profile, intensity); changes["burstiness_injections"] += c3
     c_txt, c35 = pass_rhythm_sculpting(c_txt, profile, intensity); changes["rhythm_adjustments"] += c35
@@ -1300,9 +1501,16 @@ def apply_full_passes(txt: str, intensity: float, changes: Dict[str, Any], profi
     c_txt, c5 = pass_style_overlay(c_txt, profile, intensity); changes["style_overlays"] += c5
     c_txt, c6 = pass_voice_conversion(c_txt, intensity); changes["voice_conversions"] += c6
     c_txt, c7 = pass_clause_reorder(c_txt, intensity); changes["clause_reorders"] += c7
+    c_txt, c_yi = pass_yoda_inversion(c_txt, intensity); changes["yoda_inversions"] += c_yi
+    c_txt, c_ai = pass_appositive_injection(c_txt, intensity); changes["appositive_injections"] += c_ai
     c_txt, c8 = pass_discourse_markers(c_txt, intensity); changes["discourse_markers"] += c8
     c_txt, cn = pass_nuance_injection(c_txt, intensity); changes["nuance_injections"] += cn
     c_txt, c_det = pass_determiner_scramble(c_txt, intensity); changes["determiner_scrambles"] += c_det
+    c_txt, c_zwj = pass_zwj_jitter(c_txt, intensity); changes["zwj_jitters"] += c_zwj
+    c_txt, c_inv = pass_invisible_padding(c_txt, intensity); changes["invisible_padding"] += c_inv
+    c_txt, c_pp = pass_punctuation_personality(c_txt, intensity); changes["punctuation_personality"] += c_pp
+    c_txt, c_cr = pass_cross_referencing(c_txt, intensity); changes["cross_referencing"] += c_cr
+    c_txt, c_hu = pass_hedging_uncertainty(c_txt, intensity); changes["hedging_uncertainty"] += c_hu
     c_txt, c9 = pass_syntactic_variance(c_txt, intensity); changes["syntactic_variance"] += c9
     c_txt, c10 = pass_structural_reset(c_txt, intensity); changes["structural_resets"] += c10
     c_txt, crq = pass_rhetorical_questions(c_txt, intensity); changes["rhetorical_questions"] += crq
@@ -1360,9 +1568,18 @@ def humanize_text(text: str, intensity: float = 0.7) -> Dict[str, Any]:
         "back_translation": 0, "nuance_injections": 0, "rhetorical_questions": 0, "jargon_injections": 0,
         "whitespace_jitter": 0, "structural_chaos": 0, "human_errors": 0, "signature_phrase_breaks": 0,
         "final_enforcement": 0,
+        "morphological_shifting": 0, "human_wordiness": 0, "yoda_inversions": 0,
+        "appositive_injections": 0, "zwj_jitters": 0, "invisible_padding": 0,
+        "punctuation_personality": 0, "cross_referencing": 0, "hedging_uncertainty": 0,
     }
 
     is_high_intensity, is_short_text = intensity >= 0.7, word_count < 50
+    
+    # Back-translation pre-processor (only at high intensity and not too short)
+    if is_high_intensity and not is_short_text:
+        current_text, cbt = pass_back_translation(current_text)
+        changes["back_translation"] += cbt
+
     if is_short_text:
         current_text = apply_full_passes(current_text, intensity, changes, profile) if is_high_intensity else apply_light_passes(current_text, intensity, changes, profile)
         passes_applied = ["full_pipeline"] if is_high_intensity else ["light_pipeline"]
@@ -1372,9 +1589,15 @@ def humanize_text(text: str, intensity: float = 0.7) -> Dict[str, Any]:
         current_text = " ".join(processed_segments)
         passes_applied = [
             "citation_guard", "confidence_gradient", "signature_phrase_breaker", "phrase_replacement",
-            "restructuring", "burstiness", "rhythm_sculpting", "lexical", "style_overlay", "voice_conversion",
-            "clause_reorder", "discourse_markers", "nuance_injection", "determiner_scramble", "syntactic_variance", "structural_reset", "rhetorical_questions", "jargon_injection",
+            "morphological_shifting", "human_wordiness", "restructuring", "burstiness", "rhythm_sculpting",
+            "lexical", "style_overlay", "voice_conversion", "clause_reorder", "yoda_inversion",
+            "appositive_injection", "discourse_markers", "nuance_injection", "determiner_scramble",
+            "zwj_jitter", "invisible_padding", "punctuation_personality", "cross_referencing",
+            "hedging_uncertainty", "syntactic_variance", "structural_reset", "rhetorical_questions",
+            "jargon_injection",
         ]
+        if changes.get("back_translation", 0) > 0:
+            passes_applied.insert(0, "back_translation")
 
     if not is_short_text:
         max_iterations, last_score = 5, detect_ai_score(restore_citations(current_text, citations_map))
@@ -1392,6 +1615,9 @@ def humanize_text(text: str, intensity: float = 0.7) -> Dict[str, Any]:
                 if s["score"] > 30:
                     sent_text, _ = pass_signature_phrase_breaker(sent_text)
                     sent_text, _ = pass_phrase_replacement(sent_text, intensity)
+                    sent_text, cms = pass_morphological_shifting(sent_text, intensity); changes["morphological_shifting"] += cms
+                    sent_text, cyi = pass_yoda_inversion(sent_text, intensity); changes["yoda_inversions"] += cyi
+                    sent_text, cai = pass_appositive_injection(sent_text, intensity); changes["appositive_injections"] += cai
                     sent_text, _ = pass_structural_reset(sent_text, intensity)
                     sent_text, _ = pass_lexical(sent_text, profile, intensity)
                     sent_text, _ = pass_nuance_injection(sent_text, intensity)
