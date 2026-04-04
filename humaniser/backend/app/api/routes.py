@@ -6,8 +6,6 @@ import os
 import uuid
 import time
 import logging
-from app.corpus.ingester import ingest_pdf
-from app.corpus.style_profile import list_profiles
 from app.core.detector import detect_ai_score, score_sentences, calculate_burstiness, calculate_perplexity_proxy
 from nltk.tokenize import sent_tokenize, word_tokenize
 
@@ -26,11 +24,9 @@ class HumanizationMetrics(BaseModel):
 
 class DetectionRequest(BaseModel):
     text: str
-    field: Optional[str] = "general"
 
 class HumanizationRequest(BaseModel):
     text: str
-    field: Optional[str] = "general"
     intensity: float = 0.7
 
 class HumanizationResponse(BaseModel):
@@ -71,7 +67,7 @@ async def humanize_text(request: HumanizationRequest):
     )
     
     # Execute Humanization
-    result = humanize_core(request.text, request.field, request.intensity)
+    result = humanize_core(request.text, request.intensity)
     
     # Calculate humanized metrics
     hum_sentences = sent_tokenize(result["humanized_text"])
@@ -106,27 +102,4 @@ async def humanize_text(request: HumanizationRequest):
         "metrics": metrics
     }
 
-@router.post("/corpus/upload")
-async def upload_corpus(file: UploadFile = File(...), field: str = Form(...)):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
-    
-    # Save to temp file
-    temp_dir = "/tmp/humaniser_uploads"
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_path = os.path.join(temp_dir, f"{uuid.uuid4()}_{file.filename}")
-    
-    try:
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Call ingest_pdf
-        result = ingest_pdf(temp_path, field)
-        return result
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
 
-@router.get("/corpus/profiles")
-async def get_profiles():
-    return list_profiles()

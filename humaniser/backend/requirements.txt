@@ -8,3 +8,4 @@ scipy
 python-multipart
 python-dotenv
 lemminflect
+arxiv

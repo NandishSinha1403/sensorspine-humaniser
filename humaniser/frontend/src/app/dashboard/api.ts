@@ -58,42 +58,25 @@ export interface HumanizeResponse {
   };
 }
 
-export const detectText = async (text: string, field: string): Promise<DetectionResponse> => {
+export const detectText = async (text: string): Promise<DetectionResponse> => {
   const res = await fetch(`${API_BASE}/detect`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, field }),
+    body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error("Detection failed");
   const data = await res.json();
   return data;
 };
 
-export const humanizeText = async (text: string, field: string, intensity: number): Promise<HumanizeResponse> => {
+export const humanizeText = async (text: string, intensity: number): Promise<HumanizeResponse> => {
   const res = await fetch(`${API_BASE}/humanize`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, field, intensity }),
+    body: JSON.stringify({ text, intensity }),
   });
   if (!res.ok) throw new Error("Humanization failed");
   const data = await res.json();
   return data;
 };
 
-export const uploadCorpus = async (file: File, field: string) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("field", field);
-  const res = await fetch(`${API_BASE}/corpus/upload`, {
-    method: "POST",
-    body: formData,
-  });
-  if (!res.ok) throw new Error("Upload failed");
-  return res.json();
-};
-
-export const getProfiles = async (): Promise<string[]> => {
-  const res = await fetch(`${API_BASE}/corpus/profiles`);
-  if (!res.ok) throw new Error("Failed to fetch profiles");
-  return res.json();
-};

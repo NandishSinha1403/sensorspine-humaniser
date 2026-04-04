@@ -7,6 +7,20 @@ from typing import Dict, Any, Optional, List
 
 logger = logging.getLogger("humaniser.voice")
 
+_nlp = None
+def _get_nlp():
+    global _nlp
+    if _nlp is None:
+        try:
+            import spacy
+            _nlp = spacy.load("en_core_web_md")
+        except:
+            try:
+                _nlp = spacy.load("en_core_web_sm")
+            except:
+                _nlp = False
+    return _nlp
+
 FORMAL_WORDS = [
     "furthermore", "nevertheless", "consequently", "subsequently", "analytical",
     "comprehensive", "methodology", "empirical", "theoretical", "jurisprudence",
@@ -168,27 +182,30 @@ def apply_voice(text: str, voice_profile: Dict[str, Any]) -> str:
         # If pipeline pushed sentences >30% longer than author's preference, shorten some
         if current_mean > target_length * 1.3 and target_length < 25:
             new_sentences = []
+            sp = _get_nlp()
             for s in sentences:
                 s_words = word_tokenize(s)
-                if len(s_words) > target_length * 1.5 and len(s_words) > 20:
-                    # Try to split at a comma or conjunction near the middle
-                    mid = len(s) // 2
-                    split_pos = None
-                    # Search for a split point near the middle
-                    for delim in [", and ", ", but ", "; ", ", "]:
-                        idx = s.find(delim, mid - 30, mid + 30)
-                        if idx > 0:
-                            split_pos = idx + len(delim)
+                split_done = False
+                if len(s_words) > target_length * 1.5 and len(s_words) > 20 and sp:
+                    doc = sp(s)
+                    split_token = None
+                    # Search for root-level coordinating conjunction
+                    for token in doc:
+                        if token.pos_ == "CCONJ" and token.head.dep_ == "ROOT" and token.text.strip().lower() in ["and", "but", "so", "yet", "or"]:
+                            split_token = token
                             break
-                    if split_pos and split_pos < len(s) - 10:
-                        part1 = s[:split_pos].rstrip(", ") + "."
-                        part2 = s[split_pos:].strip()
-                        if part2:
-                            part2 = part2[0].upper() + part2[1:]
-                        new_sentences.append(part1)
-                        new_sentences.append(part2)
-                        continue
-                new_sentences.append(s)
+                    if split_token:
+                        p1_text = "".join([t.text_with_ws for t in doc if t.i < split_token.i]).strip()
+                        p2_text = "".join([t.text_with_ws for t in doc if t.i > split_token.i]).strip()
+                        if p1_text and p2_text:
+                            part1 = p1_text.rstrip(",; ") + "."
+                            part2 = p2_text.capitalize()
+                            new_sentences.append(part1)
+                            new_sentences.append(part2)
+                            split_done = True
+                
+                if not split_done:
+                    new_sentences.append(s)
             current_text = " ".join(new_sentences)
 
     return current_text

@@ -10,16 +10,6 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 
-const FIELDS = [
-  { id: "general", label: "General", icon: FileText },
-  { id: "computer_science", label: "CS", icon: Cpu },
-  { id: "social_sciences", label: "Social Sci", icon: BookOpen },
-  { id: "life_sciences", label: "Life Sci", icon: Microscope },
-  { id: "engineering", label: "Engineering", icon: Zap },
-  { id: "medicine", label: "Medicine", icon: ShieldCheck },
-  { id: "law", label: "Law", icon: Gavel },
-  { id: "economics", label: "Economics", icon: Briefcase },
-];
 
 // Simple word-level diff algorithm
 function computeWordDiff(original: string, modified: string): { word: string; type: "same" | "added" | "removed" }[] {
@@ -70,7 +60,6 @@ function computeWordDiff(original: string, modified: string): { word: string; ty
 
 export default function Dashboard() {
   const [text, setText] = useState("");
-  const [field, setField] = useState("general");
   const [intensity, setIntensity] = useState(0.7);
   const [loading, setLoading] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
@@ -154,7 +143,7 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await humanizeText(text, field, intensity);
+      const res = await humanizeText(text, intensity);
       setHumanizeResult(res as any);
       setDetection(null);
       saveToHistory({ type: "humanize", preview: text.slice(0, 40), score: res.humanized_score, date: new Date().toLocaleTimeString() });
@@ -255,22 +244,6 @@ export default function Dashboard() {
           <div className="flex-1 space-y-6">
             <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-200 overflow-hidden flex flex-col h-[500px] md:h-[600px] lg:h-[750px]">
               
-              {/* Field Toolbar */}
-              <div className="bg-slate-50/50 border-b border-slate-200 px-4 md:px-6 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
-                {FIELDS.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setField(f.id)}
-                    className={clsx(
-                      "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap border",
-                      field === f.id ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-indigo-200 hover:text-indigo-600"
-                    )}
-                  >
-                    <f.icon className="w-3.5 h-3.5" />
-                    {f.label}
-                  </button>
-                ))}
-              </div>
 
               {/* Editor */}
               <div className="relative flex-1 group bg-[#FDFDFD]">
@@ -312,7 +285,7 @@ export default function Dashboard() {
                     onClick={async () => {
                        setLoading(true);
                        setError(null);
-                       await detectText(text, field).then(res => { setDetection(res as any); setHumanizeResult(null); setLoading(false); }).catch(e => { setError("Analysis failed"); setLoading(false); });
+                       await detectText(text).then(res => { setDetection(res as any); setHumanizeResult(null); setLoading(false); }).catch(e => { setError("Analysis failed"); setLoading(false); });
                     }}
                     disabled={loading || !text}
                     className="w-full md:px-10 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-black text-[10px] uppercase tracking-widest py-4 rounded-xl transition-all disabled:opacity-40"
