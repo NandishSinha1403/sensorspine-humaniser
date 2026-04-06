@@ -34,14 +34,26 @@
 *   Node.js 18+
 
 ### One-Click Setup
+**Linux/macOS:**
 ```bash
 chmod +x bootstrap.sh start.sh stop.sh
 ./bootstrap.sh
 ```
 
+**Windows:**
+```cmd
+bootstrap.bat
+```
+
 ### Launch
+**Linux/macOS:**
 ```bash
 ./start.sh
+```
+
+**Windows:**
+```cmd
+start.bat
 ```
 *   **Frontend**: `http://localhost:3000`
 *   **Backend**: `http://localhost:8000`

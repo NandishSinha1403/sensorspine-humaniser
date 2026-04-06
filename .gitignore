@@ -13,6 +13,7 @@ env/
 # Environment
 .env
 .env.local
+GEMINI.md
 
 # Node
 **/node_modules/
