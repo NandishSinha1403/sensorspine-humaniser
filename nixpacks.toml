@@ -1,6 +1,9 @@
 [build]
+aptPkgs = ["build-essential", "python3-dev"]
 cmds = [
+  "python -m pip install --upgrade pip setuptools wheel",
   "pip install -r humaniser/backend/requirements.txt",
+  "python -m spacy download en_core_web_sm",
   "python -c \"import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet'); nltk.download('stopwords'); nltk.download('brown')\"",
   "cd humaniser/backend && python scripts/generate_brown_data.py"
 ]
