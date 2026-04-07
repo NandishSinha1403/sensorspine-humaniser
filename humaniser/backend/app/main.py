@@ -72,6 +72,11 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 
 
+@app.get("/api")
+async def api_root():
+    return {"status": "api_online", "message": "Humaniser API router is active"}
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "version": "2.1.0"}
