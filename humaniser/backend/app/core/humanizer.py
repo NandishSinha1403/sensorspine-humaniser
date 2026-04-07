@@ -1198,6 +1198,7 @@ def pass_syntactic_variance(text: str, intensity: float = 1.0) -> Tuple[str, int
 def pass_structural_reset(text: str, intensity: float = 1.0) -> Tuple[str, int]:
     """
     Aggressive structural deconstruction with list-avoidance.
+    Ensures that splits result in two valid sentences and skips paragraph-starts.
     """
     sp = load_spacy()
     if not sp or intensity < 0.3:
@@ -1212,16 +1213,29 @@ def pass_structural_reset(text: str, intensity: float = 1.0) -> Tuple[str, int]:
         sent = sentences[i]
         sent_text = sent.text.strip()
         s_len = len(sent)
+        
+        # Skip the first sentence to avoid weird fragments at the start of paragraphs
+        if i == 0:
+            new_sentences.append(sent_text)
+            i += 1
+            continue
+
         if s_len > 18 and get_rng().random() < (0.7 * intensity):
             split_done = False
             for token in sent:
                 if (token.text.lower() in ("which", "who", "where") and
                     token.dep_ in ("relcl", "nsubj", "nsubjpass", "advmod") and
                     8 < (token.i - sent.start) < s_len - 5):
+                    
+                    # Prevent splitting after a verb or determiner that would leave a fragment
+                    if token.i > sent.start and sent[token.i - sent.start - 1].pos_ in ("VERB", "AUX", "ADP", "DET"):
+                        continue
+
                     is_list = False
                     if token.i > sent.start and sent[token.i - sent.start - 1].text.lower() in ("such", "including", "like", "as"): is_list = True
                     if sent_text.count(",") > 2: is_list = True
                     if is_list: continue
+                    
                     idx_off = token.i - sent.start
                     part1_t, part2_t = [t for t in sent[:idx_off]], [t for t in sent[idx_off:]]
                     if is_valid_sentence(part1_t) and is_valid_sentence(part2_t):
@@ -1240,6 +1254,11 @@ def pass_structural_reset(text: str, intensity: float = 1.0) -> Tuple[str, int]:
                 for token in sent:
                     if (token.pos_ == "CCONJ" and token.text.lower() in ("and", "but", "yet", "so") and
                         7 < (token.i - sent.start) < s_len - 5):
+                        
+                        # Grammar Guard: Don't split right after a verb
+                        if token.i > sent.start and sent[token.i - sent.start - 1].pos_ in ("VERB", "AUX"):
+                            continue
+
                         is_list = False
                         for prev in reversed(sent[:token.i - sent.start]):
                             if prev.text.lower() in ("such", "including", "like", "as"): is_list = True; break
@@ -1253,24 +1272,6 @@ def pass_structural_reset(text: str, intensity: float = 1.0) -> Tuple[str, int]:
                             p2 = "".join([t.text_with_ws for t in part2_t]).strip()
                             p2 = re.sub(r'^[,;\s]+', '', p2)
                             if p2 and len(p1.split()) > 4 and len(p2.split()) > 4:
-                                p2 = p2[0].upper() + p2[1:]
-                                p2 = re.sub(r'^(and|but|or|yet|so)\s+', '', p2, flags=re.IGNORECASE)
-                                p2 = p2[0].upper() + p2[1:]; p2 = p2.rstrip(".") + "."
-                                new_sentences.append(p1); new_sentences.append(p2)
-                                changes += 1; split_done = True; break
-            if not split_done and s_len > 28:
-                for token in sent:
-                    if token.text == "," and 12 < (token.i - sent.start) < s_len - 10:
-                        is_list = False
-                        if token.i > sent.start and sent[token.i - sent.start - 1].text.lower() in ("as", "like", "such"): is_list = True
-                        if sent_text.count(",") > 2: is_list = True
-                        if is_list: continue
-                        idx_off = token.i - sent.start
-                        part1_t, part2_t = [t for t in sent[:idx_off]], [t for t in sent[idx_off+1:]]
-                        if is_valid_sentence(part1_t) and is_valid_sentence(part2_t):
-                            p1 = "".join([t.text_with_ws for t in part1_t]).strip().rstrip(",; ") + "."
-                            p2 = "".join([t.text_with_ws for t in part2_t]).strip()
-                            if p2 and len(p1.split()) > 5 and len(p2.split()) > 5:
                                 p2 = p2[0].upper() + p2[1:]
                                 p2 = re.sub(r'^(and|but|or|yet|so)\s+', '', p2, flags=re.IGNORECASE)
                                 p2 = p2[0].upper() + p2[1:]; p2 = p2.rstrip(".") + "."
