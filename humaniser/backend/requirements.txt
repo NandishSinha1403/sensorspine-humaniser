@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 gunicorn
 nltk
-spacy==3.7.2
+spacy==3.7.5
 pymupdf
 numpy
 scipy
