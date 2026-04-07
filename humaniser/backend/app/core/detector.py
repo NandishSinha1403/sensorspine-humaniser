@@ -29,24 +29,32 @@ def _get_nlp():
 WORD_FREQ: Dict = {}
 BIGRAM_FREQ: Dict = {}
 
-def _load_brown_corpus():
-    """Load Brown corpus word and bigram frequencies at module level."""
+def load_brown_corpus_data():
+    """Load Brown corpus word and bigram frequencies. Can be called after NLTK download."""
     global WORD_FREQ, BIGRAM_FREQ
     try:
+        # Check if corpus is available before attempting to load
+        from nltk.corpus import brown
         words = [w.lower() for w in brown.words() if w.isalnum()]
         WORD_FREQ = FreqDist(words)
         # Build bigram frequencies for improved perplexity estimation
+        BIGRAM_FREQ = {}
         for i in range(len(words) - 1):
             pair = (words[i], words[i + 1])
             BIGRAM_FREQ[pair] = BIGRAM_FREQ.get(pair, 0) + 1
         logger.info("[Detector] Brown corpus loaded: %d unigrams, %d bigrams", len(WORD_FREQ), len(BIGRAM_FREQ))
+        return True
     except LookupError:
         logger.warning(
-            "[Detector] Brown corpus not available. Perplexity proxy will be degraded. "
-            "Run: python -c \"import nltk; nltk.download('brown')\""
+            "[Detector] Brown corpus not yet available. Perplexity proxy will be degraded. "
         )
+        return False
+    except Exception as e:
+        logger.error(f"[Detector] Unexpected error loading Brown corpus: {e}")
+        return False
 
-_load_brown_corpus()
+# Initial attempt (might fail if data not downloaded yet)
+load_brown_corpus_data()
 
 # ---------------------------------------------------------------------------
 # AI Signature Phrase list

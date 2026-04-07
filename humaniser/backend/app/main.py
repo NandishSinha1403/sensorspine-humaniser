@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import nltk
 
 from app.api.routes import router as api_router
+from app.core.detector import load_brown_corpus_data
 
 logger = logging.getLogger("humaniser.app")
 
@@ -16,21 +17,27 @@ NLTK_RESOURCES = ["punkt", "punkt_tab", "averaged_perceptron_tagger",
                    "averaged_perceptron_tagger_eng", "wordnet", "stopwords", "brown"]
 
 def _ensure_nltk_resources():
+    logger.info("[NLTK] Checking required resources...")
     for resource in NLTK_RESOURCES:
         try:
             nltk.data.find(f"tokenizers/{resource}" if resource.startswith("punkt") else resource)
         except LookupError:
             logger.info("Downloading NLTK resource: %s", resource)
+            # Use quiet=True but log progress
             nltk.download(resource, quiet=True)
+    
+    # Reload Brown corpus data in detector after download
+    load_brown_corpus_data()
 
 
 # ---------------------------------------------------------------------------
-# Application lifespan (replaces deprecated @app.on_event)
+# Application lifespan
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure NLTK resources are downloaded once at startup
     _ensure_nltk_resources()
-    logger.info("Humaniser API ready")
+    logger.info("Humaniser API ready and listening")
     yield
     logger.info("Humaniser API shutting down")
 
@@ -41,10 +48,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Humaniser API", version="2.1.0", lifespan=lifespan)
 
 # CORS — configurable via CORS_ORIGINS env var (comma-separated)
-cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+# Added vercel production URL as default to avoid preflight failures
+default_origins = [
+    "http://localhost:3000",
+    "https://sensorspine-humaniser-ukqw.vercel.app"
+]
+env_origins = os.environ.get("CORS_ORIGINS", "").split(",")
+cors_origins = [o.strip() for o in env_origins if o.strip()] + default_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in cors_origins],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
