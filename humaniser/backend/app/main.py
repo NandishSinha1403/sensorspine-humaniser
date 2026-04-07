@@ -51,10 +51,14 @@ app = FastAPI(title="Humaniser API", version="2.1.0", lifespan=lifespan)
 # Added vercel production URL as default to avoid preflight failures
 default_origins = [
     "http://localhost:3000",
-    "https://sensorspine-humaniser-ukqw.vercel.app"
+    "https://sensorspine-humaniser-ukqw.vercel.app",
+    "https://sensorspine-humaniser-ukqw-git-main-nandishsinha1403s-projects.vercel.app"
 ]
 env_origins = os.environ.get("CORS_ORIGINS", "").split(",")
+# Clean and ensure protocol for all origins
 cors_origins = [o.strip() for o in env_origins if o.strip()] + default_origins
+# Ensure each has protocol
+cors_origins = [o if o.startswith("http") else f"https://{o}" for o in cors_origins]
 
 app.add_middleware(
     CORSMiddleware,
