@@ -2,10 +2,11 @@ import numpy as np
 import re
 import math
 import logging
+import json
+import os
 from typing import List, Dict, Any, Tuple
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.probability import FreqDist
-from nltk.corpus import brown
 
 logger = logging.getLogger("humaniser.detector")
 
@@ -28,26 +29,35 @@ def _get_nlp():
 # ---------------------------------------------------------------------------
 WORD_FREQ: Dict = {}
 BIGRAM_FREQ: Dict = {}
+TOTAL_BROWN_WORDS: int = 0
 
 def load_brown_corpus_data():
-    """Load Brown corpus word and bigram frequencies. Can be called after NLTK download."""
-    global WORD_FREQ, BIGRAM_FREQ
+    """Load Brown corpus word and bigram frequencies from pre-computed JSON."""
+    global WORD_FREQ, BIGRAM_FREQ, TOTAL_BROWN_WORDS
     try:
-        # Check if corpus is available before attempting to load
-        from nltk.corpus import brown
-        words = [w.lower() for w in brown.words() if w.isalnum()]
-        WORD_FREQ = FreqDist(words)
-        # Build bigram frequencies for improved perplexity estimation
-        BIGRAM_FREQ = {}
-        for i in range(len(words) - 1):
-            pair = (words[i], words[i + 1])
-            BIGRAM_FREQ[pair] = BIGRAM_FREQ.get(pair, 0) + 1
-        logger.info("[Detector] Brown corpus loaded: %d unigrams, %d bigrams", len(WORD_FREQ), len(BIGRAM_FREQ))
-        return True
+        data_path = os.path.join(os.path.dirname(__file__), "brown_frequencies.json")
+        if os.path.exists(data_path):
+            with open(data_path, "r") as f:
+                data = json.load(f)
+                WORD_FREQ = data["unigrams"]
+                BIGRAM_FREQ = data["bigrams"]
+                TOTAL_BROWN_WORDS = data["total_words"]
+            logger.info("[Detector] Loaded pre-computed frequencies: %d unigrams, %d bigrams", len(WORD_FREQ), len(BIGRAM_FREQ))
+            return True
+        else:
+            # Fallback if file doesn't exist
+            from nltk.corpus import brown
+            words = [w.lower() for w in brown.words() if w.isalnum()]
+            WORD_FREQ = dict(FreqDist(words))
+            TOTAL_BROWN_WORDS = len(words)
+            BIGRAM_FREQ = {}
+            for i in range(len(words) - 1):
+                pair = f"{words[i]}|{words[i + 1]}"
+                BIGRAM_FREQ[pair] = BIGRAM_FREQ.get(pair, 0) + 1
+            logger.info("[Detector] Brown corpus computed: %d unigrams, %d bigrams", len(WORD_FREQ), len(BIGRAM_FREQ))
+            return True
     except LookupError:
-        logger.warning(
-            "[Detector] Brown corpus not yet available. Perplexity proxy will be degraded. "
-        )
+        logger.warning("[Detector] Brown corpus not yet available. Perplexity proxy will be degraded. ")
         return False
     except Exception as e:
         logger.error(f"[Detector] Unexpected error loading Brown corpus: {e}")
@@ -182,24 +192,23 @@ def calculate_perplexity_proxy(words: List[str]) -> float:
     if not words or not WORD_FREQ:
         return 50.0  
 
-    total_brown_words = WORD_FREQ.N() if hasattr(WORD_FREQ, 'N') else sum(WORD_FREQ.values())
-    if total_brown_words == 0:
-        return 50.0
+    total_vocab_size = len(WORD_FREQ)
 
     log_probs = []
     for i in range(1, len(words)):
         w_prev = words[i - 1].lower()
         w_curr = words[i].lower()
-        bigram = (w_prev, w_curr)
+        bigram_key = f"{w_prev}|{w_curr}"
 
-        bigram_count = BIGRAM_FREQ.get(bigram, 0)
+        bigram_count = BIGRAM_FREQ.get(bigram_key, 0)
         unigram_count = WORD_FREQ.get(w_prev, 0)
 
         if bigram_count > 0 and unigram_count > 0:
             cond_prob = bigram_count / unigram_count
         else:
             freq = WORD_FREQ.get(w_curr, 0)
-            cond_prob = (freq + 1) / (total_brown_words + len(WORD_FREQ))
+            # Smoothing: (count + 1) / (total words + vocabulary size)
+            cond_prob = (freq + 1) / (TOTAL_BROWN_WORDS + total_vocab_size)
 
         log_probs.append(np.log(cond_prob + 1e-10))
 
@@ -210,7 +219,6 @@ def calculate_perplexity_proxy(words: List[str]) -> float:
 
     score = 100.0 * (1 - (avg_log_prob - (-4)) / ((-10) - (-4)))
     return float(max(0.0, min(100.0, score)))
-
 
 def calculate_punctuation_uniformity(sentences: List[str]) -> float:
     """Score 0-100. Low comma variance = AI-like (100)."""
