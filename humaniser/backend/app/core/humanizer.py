@@ -1134,7 +1134,9 @@ def pass_syntactic_variance(text: str, intensity: float = 1.0) -> Tuple[str, int
         changes = 0
 
         if not has_flat:
+            # Skip the first sentence to avoid weird fragments at the start of paragraphs
             for i, s_text in enumerate(new_sentences):
+                if i == 0: continue
                 s_words = s_text.split()
                 if 4 < len(s_words) < 15:
                     new_sentences[i] = " ".join(s_words[:min(5, len(s_words))]).rstrip(",; ") + "."
@@ -1433,7 +1435,9 @@ def pass_final_enforcement(text: str) -> Tuple[str, int]:
                         if len(merged.split()) > 35:
                             new_sentences[i] = merged; new_sentences.pop(i+1); changes += 1; has_very_long = True; break
         if not has_flat:
+            # Skip the first sentence to avoid weird fragments at the start of paragraphs
             for i, s_text in enumerate(new_sentences):
+                if i == 0: continue
                 s_words = s_text.split()
                 if 4 < len(s_words) < 15:
                     new_sentences[i] = " ".join(s_words[:min(5, len(s_words))]).rstrip(",; ") + "."

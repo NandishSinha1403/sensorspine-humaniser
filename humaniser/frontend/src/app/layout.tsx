@@ -29,10 +29,6 @@ export default function RootLayout({
                 <span className="md:hidden">App</span>
                 <span className="hidden md:inline">Humanizer</span>
               </Link>
-              <a href="http://localhost:8001" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                <span className="md:hidden">Train</span>
-                <span className="hidden md:inline">Trainer</span>
-              </a>
               <div className="h-4 w-[1px] bg-slate-200 mx-1 md:mx-2 hidden sm:block"></div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded hidden sm:block whitespace-nowrap">Beta 2.0</span>
             </div>

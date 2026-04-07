@@ -388,11 +388,6 @@ export default function Dashboard() {
                </div>
             </div>
 
-            {/* Detailed Metrics Delta */}
-            {humanizeResult && (
-              <MetricsDashboard metrics={humanizeResult.metrics} />
-            )}
-
             {/* Changes Made Stats */}
             {humanizeResult && (
               <div className="space-y-4">
