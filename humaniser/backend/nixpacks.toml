@@ -1,5 +1,0 @@
-[build]
-cmds = ["pip install -r requirements.txt", "python -c \"import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet'); nltk.download('stopwords'); nltk.download('brown')\"", "python scripts/generate_brown_data.py"]
-
-[start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
