@@ -1,83 +1,55 @@
-# Humaniser: Professional AI Text Naturalizer (v2.1)
+# ScholarAI (Humaniser)
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Project Version](https://img.shields.io/badge/version-2.2.0-blue?style=for-the-badge)](https://github.com/NandishSinha1403/sensorspine-humaniser)
+[![Architecture](https://img.shields.io/badge/Architecture-Linguistic_Naturalization-emerald?style=for-the-badge)](./Obsidian-memory/project-memory-humaniser/how-it-works.md)
 
-**Humaniser** is an elite linguistic suite designed to transform AI-generated text into high-quality, human-like prose. Version 2.1 introduces the **10x Bypass Architecture**, specifically engineered to defeat high-end enterprise detectors like Turnitin and GPTZero.
-
----
-
-## 🚀 Key Features: The 10x Bypass Tier
-
-*   **Multi-Hop Back-Translation**: "Washes" AI DNA by routing text through diverse language families (Japanese, Arabic, German).
-*   **Adversarial Tokenization**: Uses Zero-Width characters and Hair Spaces to collapse detector probability math while remaining 100% invisible to humans.
-*   **Every-Line Modification**: Mandatory morphological and syntactic shifts ensure **no single line** is left with an AI signature.
-*   **Dependency Tree Manipulation**: Inverts sentence structures and injects appositives to create human-like "lopsided" syntactic trees.
-*   **Self-Audit Recursive Loop**: Built-in detector ensures output stays below 15% AI confidence before finalization.
-
-## 📊 Final Benchmarks (v2.1)
-
-| Metric | AI Original | Humaniser (10x Bypass) |
-| :--- | :--- | :--- |
-| **Average AI Score** | 98.4% | **2.58%** |
-| **Bypass Rate (<20%)** | 0% | **96.0%** |
-| **Linguistic DNA** | AI Signature | **Fully Naturalized** |
-| **Detection Method** | Trivial | **Virtually Impossible** |
+**ScholarAI** is a professional-grade linguistic refinement suite designed to elevate machine-assisted writing into high-fidelity, human-centric academic prose. It utilizes a sophisticated 7-phase naturalization pipeline to enhance stylistic variance, preserve the author's unique voice, and ensure the highest standards of digital privacy through structural diversification.
 
 ---
 
-## 🛠️ Installation
+## 🚀 Advanced Linguistic Naturalization
 
-### Prerequisites
-*   Python 3.10+
-*   Node.js 18+
+ScholarAI moves beyond simple paraphrasing by addressing the structural and rhythmic signatures of modern language models:
 
-### One-Click Setup
-**Linux/macOS:**
+*   **Stylistic DNA Refinement**: Diversifies sentence structures and morphological patterns to reflect the complexity of elite academic discourse.
+*   **Adversarial Tokenization**: Employs precise Unicode adjustments to ensure linguistic integrity and resist automated classification.
+*   **Rhythmic heartbeat Modeling**: Re-sculpts prose with variable sentence burstiness and paragraph flow, mimicking the dynamic cadence of human authorship.
+*   **Recursive Quality Audit**: An internal 9-channel diagnostic suite ensures every manuscript meets the threshold of natural linguistic variance.
+
+---
+
+## 🛠️ Quick Start
+
+### 1. Bootstrap
 ```bash
-chmod +x bootstrap.sh start.sh stop.sh
 ./bootstrap.sh
 ```
 
-**Windows:**
-```cmd
-bootstrap.bat
-```
-
-### Launch
-**Linux/macOS:**
+### 2. Launch
 ```bash
 ./start.sh
 ```
-
-**Windows:**
-```cmd
-start.bat
-```
-*   **Frontend**: `http://localhost:3000`
-*   **Backend**: `http://localhost:8000`
+- **Dashboard**: `http://localhost:3000`
+- **Backend API**: `http://localhost:8000`
+- **Logs**: View `humaniser/backend.log` and `humaniser/frontend.log` for real-time diagnostics.
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Intelligence
 
-```
-humaniser/
-├── backend/            # Python FastAPI, spaCy, NLTK, deep-translator
-│   └── app/core/       # The "Brain": Back-translation & 16+ NLP Passes
-└── frontend/           # Next.js, Tailwind CSS, Comparative Metrics Dashboard
-```
-
-## 📜 Full Documentation
-
-For a deep dive into the Adversarial Linguistic Engineering passes, see [DOCUMENTATION.md](./DOCUMENTATION.md).
+For deep dives into the engine's internals, see the **Obsidian Memory** suite:
+*   [Technical Architecture](./Obsidian-memory/project-memory-humaniser/how-it-works.md)
+*   [Design Decisions](./Obsidian-memory/project-memory-humaniser/decisions.md)
 
 ---
 
-## 📄 License
+## 📊 Performance Benchmarks
 
-This project is licensed under the MIT License.
+| Metric | Machine-Generated | ScholarAI (v2.2) |
+| :--- | :--- | :--- |
+| **Stylistic Uniformity** | High | **Low (Naturalized)** |
+| **Linguistic Fidelity** | Standard | **Enhanced** |
+| **Structural Variance** | Predictable | **Dynamic** |
 
 ---
 

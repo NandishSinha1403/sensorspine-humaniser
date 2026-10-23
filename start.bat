@@ -16,15 +16,17 @@ if "%FRONTEND_PORT%"=="" set FRONTEND_PORT=3000
 
 :: Start Backend API
 echo [API] Starting Humaniser API on http://localhost:%BACKEND_PORT%...
-start /b cmd /c "cd humaniser\backend && python -m uvicorn app.main:app --host 0.0.0.0 --port %BACKEND_PORT% > nul 2>&1"
+echo [API] Logs: humaniser\backend.log
+start /b cmd /c "cd humaniser\backend && python -m uvicorn app.main:app --host 0.0.0.0 --port %BACKEND_PORT% > ..\..\humaniser\backend.log 2>&1"
 
 :: Wait for backends to be ready
 echo [INFO] Waiting for services to initialize...
-timeout /t 3 /nobreak > nul
+timeout /t 5 /nobreak > nul
 
 :: Start Frontend
 echo [FRONTEND] Starting Dashboard on http://localhost:%FRONTEND_PORT%...
-start /b cmd /c "cd humaniser\frontend && npm run dev -- -p %FRONTEND_PORT% > nul 2>&1"
+echo [FRONTEND] Logs: humaniser\frontend.log
+start /b cmd /c "cd humaniser\frontend && npm run dev -- -p %FRONTEND_PORT% > ..\..\humaniser\frontend.log 2>&1"
 
 echo =======================================
 echo ✅ All services are now running!

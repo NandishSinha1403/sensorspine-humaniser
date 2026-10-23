@@ -17,8 +17,7 @@ The "10x Bypass" architecture implements a mandatory transformation for **every 
 The engine utilizes a four-layered approach to ensure total linguistic naturalization.
 
 ### Layer 1: Adversarial Pre-Processing (The "DNA Wash")
-*   **Multi-Hop Back-Translation**: Text is programmatically routed through vastly different language families (e.g., English → Japanese → Arabic → English). This process destroys the original LLM's syntactic DNA while neural translation engines (like Google/DeepL) maintain semantic meaning.
-*   **Jargon Tokenization**: Technical terms (e.g., "CRISPR-Cas9", "Non-Euclidean") are identified via regex and protected during translation to prevent semantic mangling.
+*   **Jargon Tokenization**: Technical terms (e.g., "CRISPR-Cas9", "Non-Euclidean") are identified via regex and protected during subsequent NLP passes to prevent semantic mangling.
 
 ### Layer 2: Syntactic & Morphological Disruption
 *   **Morphological Shifting**: High-frequency AI verbs are converted into noun phrases (e.g., "analyzed" → "conducted an analysis"), shifting the sentence from a "predictable LLM" structure to a "complex academic" one.
@@ -49,9 +48,6 @@ This layer targets the mathematical foundation of AI detectors without changing 
 ---
 
 ## 4. Implementation Details
-
-### Back-Translation Logic
-Utilizes the `deep-translator` library with a custom `placeholder` approach to preserve technical jargon and citations (`[1]`, `(Smith et al., 2024)`).
 
 ### Self-Audit Recursive Loop
 The engine recursively scores its own output. If a segment still tests > 15% AI, it triggers "Extreme Restructuring" which applies random sentence reordering and aggressive whitespace jitter.

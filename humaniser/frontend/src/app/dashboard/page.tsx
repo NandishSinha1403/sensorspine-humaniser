@@ -216,9 +216,9 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 px-2">
           <div className="space-y-0.5">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-              <Activity className="text-indigo-600 w-6 h-6" /> Manuscript Intelligence
+              <Activity className="text-indigo-600 w-6 h-6" /> ScholarAI
             </h1>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Professional Linguistic Suite</p>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Elite Manuscript Intelligence Suite</p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-6 mt-4 md:mt-0">
              <div className="flex flex-col">
@@ -569,7 +569,7 @@ export default function Dashboard() {
                     </button>
                  </div>
                  <div className="text-[10px] font-bold text-slate-400 italic">
-                    Verified Academic Manuscript Refinement
+                    ScholarAI — Elite Manuscript Refinement
                  </div>
               </div>
 

@@ -52,7 +52,6 @@ export interface HumanizeResponse {
     style_overlays: number;
     voice_conversions: number;
     clause_reorders: number;
-    discourse_markers: number;
     audit_iterations: number;
     voice_adjustments: number;
     final_cleanups: number;

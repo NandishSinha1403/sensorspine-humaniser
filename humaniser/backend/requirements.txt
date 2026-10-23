@@ -10,4 +10,5 @@ python-multipart
 python-dotenv
 lemminflect
 arxiv
-deep-translator
+flashtext
+requests

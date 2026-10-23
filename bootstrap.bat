@@ -53,10 +53,6 @@ echo ✅ Bootstrap Complete!
 echo ------------------------------------------------
 echo To run the application:
 echo.
-echo 1. Start Backend:
-echo    cd humaniser\backend ^&^& python -m uvicorn app.main:app --reload --port 8000
-echo.
-echo 2. Start Frontend:
-echo    cd humaniser\frontend ^&^& npm run dev
+echo    start.bat
 echo ------------------------------------------------
 pause
